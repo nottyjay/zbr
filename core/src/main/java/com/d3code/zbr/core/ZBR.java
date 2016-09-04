@@ -2,6 +2,7 @@ package com.d3code.zbr.core;
 
 import com.d3code.zbr.core.handler.DefaultZBRLogMessageHandler;
 import com.d3code.zbr.core.handler.ZBRLogMessageHandler;
+import com.google.common.collect.ImmutableMap;
 import kafka.consumer.Consumer;
 import kafka.consumer.ConsumerConfig;
 import kafka.consumer.KafkaStream;
@@ -72,14 +73,14 @@ public class ZBR {
     public void connect(){
         ConsumerConnector connector = Consumer.createJavaConsumerConnector(new ConsumerConfig(properties));
         Map<String, List<KafkaStream<byte[], byte[]>>> messageStreams = connector.createMessageStreams(topicMap);
+        ExecutorService executor = Executors.newFixedThreadPool(sumAllTopicPartitionCount());
         for(final String topic : topicMap.keySet()) {
             List<KafkaStream<byte[], byte[]>> streams = messageStreams.get(topic);
-            ExecutorService executor = Executors.newFixedThreadPool(this.consumerNum);
             for(final KafkaStream<byte[], byte[]> stream : streams){
                 executor.submit(new Runnable() {
                     private ZBRLogMessageHandler handler;
                     public void run() {
-                        if(handlerMap.containsKey(topic)){
+                        if(handlerMap != null && handlerMap.containsKey(topic)){
                             handler = handlerMap.get(topic);
                         }else{
                             handler = defaultHandler;
@@ -91,5 +92,13 @@ public class ZBR {
                 });
             }
         }
+    }
+
+    private int sumAllTopicPartitionCount(){
+        int sum = 0;
+        for(int count : topicMap.values()){
+            sum += count;
+        }
+        return sum;
     }
 }

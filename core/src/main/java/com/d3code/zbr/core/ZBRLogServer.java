@@ -50,10 +50,11 @@ public class ZBRLogServer {
         for(int i = 0; i < topicTemp.length; i++){
             String topic = topicTemp[i];
             // 若没有设置对应的topic接收线程数，默认为4个
-            if(partitionTemp.length < i){
+            if(partitionTemp.length < (i + 1)){
                 topicCountMap.put(topic, 4);
+            }else {
+                topicCountMap.put(topic, Integer.valueOf(partitionTemp[i]));
             }
-            topicCountMap.put(topic, Integer.valueOf(partitionTemp[i]));
 
             // 查询是否有特定的handler处理。key名称为kafka.topic.${key}，value为handler的class
             String key = "kafka.topic." + topic;
